@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm add:*)",
+      "Bash(mkdir:*)",
+      "Bash(pnpm run:*)",
+      "Bash(electron:*)",
+      "Bash(./node_modules/.bin/electron:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm start:*)",
+      "Bash(netstat:*)",
+      "Read(//c/Users/Iago/Documents/Projetos/Habbit/**)",
+      "Bash(cat:*)",
+      "Bash(pnpm start:dev:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(node:*)",
+      "Bash(curl -X POST http://localhost:3333/auth/login -H \"Content-Type: application/json\" -d \"{\"\"email\"\":\"\"admin@habbit.com\"\",\"\"password\"\":\"\"admin123\"\"}\")",
+      "Bash(tasklist)",
+      "Bash(taskkill:*)",
+      "Bash(node_modules/.bin/electron.cmd:*)",
+      "Bash(electron-builder:*)",
+      "Bash(pnpm exec:*)",
+      "Bash(tar:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(del nul)",
+      "Bash(git filter-branch:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

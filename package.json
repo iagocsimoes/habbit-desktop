@@ -1,0 +1,110 @@
+{
+  "name": "habbit-desktop",
+  "version": "1.0.0",
+  "description": "Habbit - Corretor de Texto Inteligente",
+  "main": "dist/main.js",
+  "scripts": {
+    "build": "tsc && node copy-files.js",
+    "watch": "tsc --watch",
+    "start": "pnpm run build && cross-env NODE_ENV=production electron .",
+    "dev": "pnpm run build && cross-env NODE_ENV=development electron .",
+    "pack": "pnpm run build && electron-builder --dir",
+    "dist": "pnpm run build && electron-builder",
+    "dist:win": "pnpm run build && electron-builder --win",
+    "dist:mac": "pnpm run build && electron-builder --mac",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "habbit",
+    "text-correction",
+    "ai",
+    "productivity"
+  ],
+  "author": "Habbit Team",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^24.6.2",
+    "cross-env": "^10.1.0",
+    "electron": "^38.2.1",
+    "electron-builder": "^26.0.12",
+    "png-to-ico": "^3.0.1",
+    "sharp": "^0.34.4",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "axios": "^1.12.2",
+    "clipboardy": "3.0.0",
+    "electron-store": "8.2.0",
+    "electron-updater": "^6.6.2",
+    "node-global-key-listener": "^0.3.0"
+  },
+  "build": {
+    "appId": "com.habbit.desktop",
+    "productName": "Habbit",
+    "icon": "build/icon.png",
+    "files": [
+      "dist/**/*",
+      "node_modules/**/*",
+      "package.json",
+      "build/icon.png"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "iagocsimoes",
+        "repo": "habbit-desktop"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Habbit",
+      "runAfterFinish": true,
+      "deleteAppDataOnUninstall": true,
+      "artifactName": "${productName}Setup.${ext}"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity"
+    },
+    "dmg": {
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    }
+  }
+}
