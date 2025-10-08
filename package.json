@@ -5,6 +5,7 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && node copy-files.js",
+    "prebuild": "node convert-icon.js",
     "watch": "tsc --watch",
     "start": "pnpm run build && cross-env NODE_ENV=production electron .",
     "dev": "pnpm run build && cross-env NODE_ENV=development electron .",
@@ -41,21 +42,22 @@
   "build": {
     "appId": "com.habbit.desktop",
     "productName": "Habbit",
+    "copyright": "Copyright © 2025 Habbit Team",
     "icon": "build/icon.png",
     "files": [
       "dist/**/*",
       "node_modules/**/*",
       "package.json",
-      "build/icon.png"
+      "build/icon.png",
+      "build/icon.ico"
     ],
     "directories": {
       "output": "release"
     },
     "publish": [
       {
-        "provider": "github",
-        "owner": "iagocsimoes",
-        "repo": "habbit-desktop"
+        "provider": "generic",
+        "url": "http://134.195.90.241:3333/downloads"
       }
     ],
     "win": {
@@ -67,7 +69,7 @@
           ]
         }
       ],
-      "icon": "build/icon.png"
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": true,
@@ -78,7 +80,10 @@
       "shortcutName": "Habbit",
       "runAfterFinish": true,
       "deleteAppDataOnUninstall": true,
-      "artifactName": "${productName}Setup.${ext}"
+      "artifactName": "${productName}Setup.${ext}",
+      "displayLanguageSelector": false,
+      "installerLanguages": ["pt_BR"],
+      "language": "1046"
     },
     "mac": {
       "target": [
@@ -105,6 +110,13 @@
           "path": "/Applications"
         }
       ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility"
     }
   }
 }
