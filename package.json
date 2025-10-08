@@ -21,7 +21,10 @@
     "ai",
     "productivity"
   ],
-  "author": "Habbit Team",
+  "author": {
+    "name": "Habbit Team",
+    "email": "contact@habbit.com"
+  },
   "license": "ISC",
   "devDependencies": {
     "@types/node": "^24.6.2",
