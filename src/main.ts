@@ -5,7 +5,7 @@ import authService from './services/auth';
 import keyboardService from './services/keyboard';
 import correctionService from './services/correction';
 import { correctionsApi } from './api/corrections';
-import { normalizeShortcut, isMac } from './utils/platform';
+import { isMac } from './utils/platform';
 import { logger } from './utils/logger';
 
 let tray: Tray | null = null;
@@ -30,8 +30,7 @@ function checkAccessibilityPermission(): boolean {
         // Re-initialize keyboard listener now that we have permission
         const user = authService.getCurrentUser();
         if (user) {
-          const platformShortcut = normalizeShortcut(user.shortcut);
-          const registered = keyboardService.register(platformShortcut, async () => {
+          const registered = keyboardService.register(user.shortcut, async () => {
             await correctionService.correctSelectedText();
           });
           if (!registered) {
@@ -221,10 +220,9 @@ function setupIpcHandlers() {
       const user = await authService.login(email, password);
       logger.info('Login successful:', user.email, 'shortcut:', user.shortcut);
 
-      // Register keyboard shortcut with platform normalization
-      const platformShortcut = normalizeShortcut(user.shortcut);
-      logger.info('Registering keyboard shortcut after login:', platformShortcut);
-      const registered = keyboardService.register(platformShortcut, async () => {
+      // Register keyboard shortcut
+      logger.info('Registering keyboard shortcut after login:', user.shortcut);
+      const registered = keyboardService.register(user.shortcut, async () => {
         logger.info('Shortcut triggered!');
         await correctionService.correctSelectedText();
       });
@@ -275,8 +273,7 @@ function setupIpcHandlers() {
     }
 
     await authService.updateShortcut(shortcut);
-    const platformShortcut = normalizeShortcut(shortcut);
-    keyboardService.updateShortcut(platformShortcut);
+    keyboardService.updateShortcut(shortcut);
   });
 
   ipcMain.handle('settings:updateCorrectionStyle', async (_, style: string) => {
@@ -344,6 +341,27 @@ function setupAutoUpdater() {
 }
 
 // App lifecycle
+// Ensure only one instance of the app runs at a time.
+// Without this, a second launch fails to register the global shortcut
+// because the first instance already holds it.
+const gotTheLock = app.requestSingleInstanceLock();
+if (!gotTheLock) {
+  app.quit();
+}
+
+app.on('second-instance', () => {
+  // Someone tried to run a second instance — focus the settings window if open,
+  // otherwise open it (or login window) so the user gets feedback.
+  if (settingsWindow) {
+    if (settingsWindow.isMinimized()) settingsWindow.restore();
+    settingsWindow.focus();
+  } else if (authService.getCurrentUser()) {
+    createSettingsWindow();
+  } else {
+    createLoginWindow();
+  }
+});
+
 app.whenReady().then(async () => {
   try {
     setupIpcHandlers();
@@ -365,10 +383,9 @@ app.whenReady().then(async () => {
 
     if (user) {
       logger.info('User loaded from storage:', user.email, 'shortcut:', user.shortcut);
-      // Register keyboard shortcut with platform normalization
-      const platformShortcut = normalizeShortcut(user.shortcut);
-      logger.info('Registering keyboard shortcut:', platformShortcut);
-      const registered = keyboardService.register(platformShortcut, async () => {
+      // Register keyboard shortcut
+      logger.info('Registering keyboard shortcut:', user.shortcut);
+      const registered = keyboardService.register(user.shortcut, async () => {
         logger.info('Shortcut triggered!');
         await correctionService.correctSelectedText();
       });

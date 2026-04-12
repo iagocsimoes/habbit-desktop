@@ -1,119 +1,106 @@
-import { GlobalKeyboardListener } from 'node-global-key-listener';
+import { globalShortcut } from 'electron';
 import { logger } from '../utils/logger';
 
 type ShortcutCallback = () => void | Promise<void>;
 
 class KeyboardService {
-  private listener: GlobalKeyboardListener | null = null;
-  private currentShortcut: string = 'CTRL + /';
+  private currentAccelerator: string = '';
   private callback: ShortcutCallback | null = null;
   private isEnabled: boolean = false;
+  private isRegistered: boolean = false;
 
-  constructor() {
-    // Listener is created on first register() call
-  }
+  /**
+   * Converts a user-facing shortcut string to Electron accelerator format.
+   * e.g. "Ctrl + /" → "Ctrl+/", "Cmd+Shift+/" → "Command+Shift+/"
+   */
+  private toAccelerator(shortcut: string): string {
+    const parts = shortcut.split('+').map(k => k.trim());
 
-  private parseShortcut(shortcut: string): { keys: string[]; ctrl: boolean; alt: boolean; shift: boolean; meta: boolean } {
-    const parts = shortcut.toUpperCase().split('+').map(k => k.trim());
-
-    // Map common key names to their actual event names
-    // Map shortcut key names to node-global-key-listener event names (macOS uses DOT, not PERIOD, etc.)
-    const keyMap: Record<string, string> = {
-      '/': 'FORWARD SLASH',
-      'SLASH': 'FORWARD SLASH',
-      '\\': 'BACK SLASH',
-      'BACKSLASH': 'BACK SLASH',
-      ',': 'COMMA',
-      '.': 'DOT',
-      'PERIOD': 'DOT',
-      ';': 'SEMICOLON',
-      "'": 'QUOTE',
-      '[': 'LEFT BRACKET',
-      ']': 'RIGHT BRACKET',
-      '-': 'MINUS',
-      '=': 'EQUAL',
-      'SPACE': 'SPACE',
-    };
-
-    const modifiers = ['CTRL', 'ALT', 'SHIFT', 'CMD', 'COMMAND', 'META'];
-    const keys = parts
-      .filter(k => !modifiers.includes(k))
-      .map(k => keyMap[k] || k);
-
-    return {
-      keys,
-      ctrl: parts.includes('CTRL'),
-      alt: parts.includes('ALT'),
-      shift: parts.includes('SHIFT'),
-      meta: parts.includes('CMD') || parts.includes('COMMAND') || parts.includes('META'),
-    };
-  }
-
-  private safeKill(): void {
-    try {
-      if (this.listener) {
-        this.listener.kill();
+    const mapped = parts.map(part => {
+      switch (part.toUpperCase()) {
+        case 'CTRL':
+        case 'CONTROL':
+          return 'Ctrl';
+        case 'CMD':
+        case 'COMMAND':
+        case 'META':
+          return 'Command';
+        case 'ALT':
+        case 'OPTION':
+          return 'Alt';
+        case 'SHIFT':
+          return 'Shift';
+        case 'FORWARD SLASH':
+        case 'SLASH':
+          return '/';
+        case 'BACK SLASH':
+        case 'BACKSLASH':
+          return '\\';
+        case 'SPACE':
+          return 'Space';
+        case 'DOT':
+        case 'PERIOD':
+          return '.';
+        case 'COMMA':
+          return ',';
+        case 'SEMICOLON':
+          return ';';
+        case 'EQUAL':
+        case 'EQUALS':
+          return '=';
+        case 'MINUS':
+          return '-';
+        default:
+          return part;
       }
-    } catch (error) {
-      logger.warn('Error killing keyboard listener:', error);
-    }
-    this.listener = null;
+    });
+
+    return mapped.join('+');
   }
 
   register(shortcut: string, callback: ShortcutCallback): boolean {
-    this.currentShortcut = shortcut;
     this.callback = callback;
 
-    // Recreate listener to remove old listeners
-    this.safeKill();
+    // Unregister previous shortcut
+    this.unregisterCurrent();
+
+    const accelerator = this.toAccelerator(shortcut);
+    this.currentAccelerator = accelerator;
 
     try {
-      this.listener = new GlobalKeyboardListener();
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      logger.error('Falha ao inicializar o listener de teclado:', msg);
-      this.listener = null;
-      this.isEnabled = false;
-      return false;
-    }
-
-    if (this.listener) {
-      const shortcutConfig = this.parseShortcut(shortcut);
-      logger.info('Shortcut config:', JSON.stringify(shortcutConfig));
-
-      this.listener.addListener((event, down) => {
-        if (!this.isEnabled || event.state !== 'DOWN') return;
-
-        const keyName = event.name?.toUpperCase() || '';
-
-        const hasCtrl = (down as any)['LEFT CTRL'] || (down as any)['RIGHT CTRL'] || false;
-        const hasAlt = (down as any)['LEFT ALT'] || (down as any)['RIGHT ALT'] || false;
-        const hasShift = (down as any)['LEFT SHIFT'] || (down as any)['RIGHT SHIFT'] || false;
-        const hasMeta = (down as any)['LEFT META'] || (down as any)['RIGHT META'] || false;
-
-        // Log key presses for debugging (only when modifiers are held)
-        if (hasCtrl || hasMeta || hasAlt) {
-          logger.info(`Key pressed: ${keyName} ctrl=${hasCtrl} alt=${hasAlt} shift=${hasShift} meta=${hasMeta}`);
-        }
-
-        if (
-          hasCtrl === shortcutConfig.ctrl &&
-          hasAlt === shortcutConfig.alt &&
-          hasShift === shortcutConfig.shift &&
-          hasMeta === shortcutConfig.meta &&
-          shortcutConfig.keys.includes(keyName)
-        ) {
-          logger.info('Shortcut matched!');
-          if (this.callback) {
-            this.callback();
-          }
+      const success = globalShortcut.register(accelerator, () => {
+        if (!this.isEnabled) return;
+        if (this.callback) {
+          Promise.resolve(this.callback()).catch(err => {
+            logger.error('Error in shortcut callback:', err instanceof Error ? err.message : err);
+          });
         }
       });
 
-      this.isEnabled = true;
-    }
+      if (!success) {
+        logger.error('Failed to register global shortcut (may be in use by another app):', accelerator);
+        return false;
+      }
 
-    return true;
+      logger.info('Global shortcut registered:', accelerator);
+      this.isEnabled = true;
+      this.isRegistered = true;
+      return true;
+    } catch (error) {
+      logger.error('Error registering global shortcut:', error instanceof Error ? error.message : error);
+      return false;
+    }
+  }
+
+  private unregisterCurrent(): void {
+    if (this.isRegistered && this.currentAccelerator) {
+      try {
+        globalShortcut.unregister(this.currentAccelerator);
+      } catch (error) {
+        logger.warn('Error unregistering shortcut:', error);
+      }
+      this.isRegistered = false;
+    }
   }
 
   updateShortcut(shortcut: string): boolean {
@@ -132,7 +119,7 @@ class KeyboardService {
   }
 
   destroy(): void {
-    this.safeKill();
+    this.unregisterCurrent();
     this.isEnabled = false;
   }
 }

@@ -5,6 +5,9 @@ import { logger } from '../utils/logger';
 
 const execAsync = promisify(exec);
 
+/** Common exec options: hide console window to prevent focus stealing in packaged builds */
+const execOptions = { windowsHide: true };
+
 class ClipboardService {
   /**
    * Captures the currently selected text by simulating Ctrl+C
@@ -72,7 +75,7 @@ class ClipboardService {
   private async simulateCopy(): Promise<void> {
     try {
       if (process.platform === 'win32') {
-        await execAsync('powershell -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^c\')"');
+        await execAsync('powershell -NoProfile -NonInteractive -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^c\')"', execOptions);
       } else if (process.platform === 'darwin') {
         await execAsync('osascript -e \'tell application "System Events" to keystroke "c" using command down\'');
       } else {
@@ -90,7 +93,7 @@ class ClipboardService {
   private async simulatePaste(): Promise<void> {
     try {
       if (process.platform === 'win32') {
-        await execAsync('powershell -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^v\')"');
+        await execAsync('powershell -NoProfile -NonInteractive -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^v\')"', execOptions);
       } else if (process.platform === 'darwin') {
         await execAsync('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
       } else {
