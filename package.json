@@ -56,6 +56,9 @@
       "build/trayIcon.png",
       "build/trayIcon@2x.png"
     ],
+    "asarUnpack": [
+      "node_modules/node-global-key-listener/**/*"
+    ],
     "directories": {
       "output": "release"
     },
