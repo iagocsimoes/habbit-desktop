@@ -11,15 +11,13 @@ export function isLinux(): boolean {
 }
 
 /**
- * Normalizes keyboard shortcuts for the current platform
- * Converts Ctrl to Cmd on macOS
+ * Normalizes keyboard shortcuts for the keyboard listener.
+ * On macOS, Cmd is stored as "Cmd" from the settings UI - map it to META
+ * for node-global-key-listener. Ctrl stays as Ctrl.
  */
 export function normalizeShortcut(shortcut: string): string {
-  if (isMac()) {
-    // Replace Ctrl with Cmd on macOS
-    return shortcut.replace(/ctrl/gi, 'Cmd');
-  }
-  return shortcut;
+  // Map "Cmd" to "META" for node-global-key-listener
+  return shortcut.replace(/\bCmd\b/gi, 'META');
 }
 
 /**

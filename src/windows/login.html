@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src http://localhost:3333 https://localhost:3333; img-src 'self' data:; font-src 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src https://api.habbitai.app; img-src 'self' data:; font-src 'self'">
   <title>Habbit - Login</title>
   <style>
     * {
@@ -21,6 +21,11 @@
       align-items: center;
       height: 100vh;
       overflow: hidden;
+      -webkit-app-region: drag;
+    }
+
+    .login-container {
+      -webkit-app-region: no-drag;
     }
 
     .login-container {

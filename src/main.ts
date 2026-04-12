@@ -1,23 +1,60 @@
-import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage } from 'electron';
+import { app, BrowserWindow, Tray, Menu, ipcMain, nativeImage, Notification, systemPreferences } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import path from 'path';
 import authService from './services/auth';
 import keyboardService from './services/keyboard';
 import correctionService from './services/correction';
 import { correctionsApi } from './api/corrections';
-import { normalizeShortcut } from './utils/platform';
+import { normalizeShortcut, isMac } from './utils/platform';
+import { logger } from './utils/logger';
 
 let tray: Tray | null = null;
 let loginWindow: BrowserWindow | null = null;
 let settingsWindow: BrowserWindow | null = null;
 
+// Show a cross-platform notification
+function showNotification(title: string, body: string) {
+  new Notification({ title, body }).show();
+}
+
+// Check macOS Accessibility permission and poll until granted
+function checkAccessibilityPermission(): boolean {
+  if (!isMac()) return true;
+  const trusted = systemPreferences.isTrustedAccessibilityClient(true);
+  if (!trusted) {
+    // Poll every 2 seconds until user grants permission
+    const pollInterval = setInterval(() => {
+      if (systemPreferences.isTrustedAccessibilityClient(false)) {
+        clearInterval(pollInterval);
+        console.log('Accessibility permission granted');
+        // Re-initialize keyboard listener now that we have permission
+        const user = authService.getCurrentUser();
+        if (user) {
+          const platformShortcut = normalizeShortcut(user.shortcut);
+          keyboardService.register(platformShortcut, async () => {
+            await correctionService.correctSelectedText();
+          });
+        }
+      }
+    }, 2000);
+  }
+  return trusted;
+}
+
 // Create tray icon
 function createTray() {
-  // Use the app icon for tray (will be resized automatically)
-  const iconPath = path.join(__dirname, '../build/icon.png');
-  const icon = nativeImage.createFromPath(iconPath);
+  if (isMac()) {
+    // Use dedicated tray icon on macOS (template image adapts to light/dark menu bar)
+    const trayIconPath = path.join(__dirname, '../build/trayIcon.png');
+    const trayIcon = nativeImage.createFromPath(trayIconPath);
+    trayIcon.setTemplateImage(true);
+    tray = new Tray(trayIcon);
+  } else {
+    const iconPath = path.join(__dirname, '../build/icon.png');
+    const icon = nativeImage.createFromPath(iconPath);
+    tray = new Tray(icon.resize({ width: 16, height: 16 }));
+  }
 
-  tray = new Tray(icon.resize({ width: 16, height: 16 }));
   updateTrayMenu();
   tray.setToolTip('Habbit - Corretor de Texto');
 }
@@ -51,6 +88,13 @@ function updateTrayMenu() {
     },
     { type: 'separator' },
     {
+      label: 'Ver Logs',
+      click: () => {
+        const { shell } = require('electron');
+        shell.openPath(logger.getLogPath());
+      },
+    },
+    {
       label: 'Sair do Aplicativo',
       click: () => {
         keyboardService.destroy();
@@ -73,6 +117,8 @@ function createLoginWindow() {
     height: 550,
     resizable: false,
     autoHideMenuBar: true,
+    titleBarStyle: isMac() ? 'hiddenInset' : 'default',
+    trafficLightPosition: isMac() ? { x: 12, y: 12 } : undefined,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -81,7 +127,9 @@ function createLoginWindow() {
     },
   });
 
-  loginWindow.removeMenu();
+  if (!isMac()) {
+    loginWindow.removeMenu();
+  }
   loginWindow.loadFile(path.join(__dirname, 'windows', 'login.html'));
 
   // Open DevTools in development
@@ -105,6 +153,8 @@ function createSettingsWindow() {
     height: 700,
     resizable: false,
     autoHideMenuBar: true,
+    titleBarStyle: isMac() ? 'hiddenInset' : 'default',
+    trafficLightPosition: isMac() ? { x: 12, y: 12 } : undefined,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
@@ -113,7 +163,9 @@ function createSettingsWindow() {
     },
   });
 
-  settingsWindow.removeMenu();
+  if (!isMac()) {
+    settingsWindow.removeMenu();
+  }
   settingsWindow.loadFile(path.join(__dirname, 'windows', 'settings.html'));
 
   // Open DevTools in development
@@ -137,8 +189,13 @@ function validatePassword(password: string): boolean {
 }
 
 function validateShortcut(shortcut: string): boolean {
-  const validKeys = /^(CTRL|ALT|SHIFT|CMD|COMMAND|META|\+|[A-Z0-9]|FORWARD SLASH|BACK SLASH|COMMA|PERIOD|SEMICOLON|QUOTE|LEFT BRACKET|RIGHT BRACKET|MINUS|EQUAL|\s)+$/i;
-  return typeof shortcut === 'string' && validKeys.test(shortcut) && shortcut.length <= 50;
+  if (typeof shortcut !== 'string' || shortcut.length === 0 || shortcut.length > 50) return false;
+  // Must contain at least one modifier + one key separated by +
+  const parts = shortcut.split('+').map(k => k.trim()).filter(Boolean);
+  if (parts.length < 2) return false;
+  const modifiers = ['ctrl', 'alt', 'shift', 'cmd', 'command', 'meta'];
+  const hasModifier = parts.some(p => modifiers.includes(p.toLowerCase()));
+  return hasModifier;
 }
 
 function validateCorrectionStyle(style: string): boolean {
@@ -159,10 +216,13 @@ function setupIpcHandlers() {
       }
 
       const user = await authService.login(email, password);
+      logger.info('Login successful:', user.email, 'shortcut:', user.shortcut);
 
       // Register keyboard shortcut with platform normalization
       const platformShortcut = normalizeShortcut(user.shortcut);
+      logger.info('Registering keyboard shortcut after login:', platformShortcut);
       keyboardService.register(platformShortcut, async () => {
+        logger.info('Shortcut triggered!');
         await correctionService.correctSelectedText();
       });
 
@@ -263,13 +323,10 @@ function setupAutoUpdater() {
     autoUpdater.on('update-downloaded', () => {
       console.log('Atualização baixada! Será instalada ao reiniciar o aplicativo.');
 
-      // Notify user via tray
-      if (tray) {
-        tray.displayBalloon({
-          title: 'Atualização Disponível',
-          content: 'Uma nova versão do Habbit foi baixada e será instalada ao reiniciar o aplicativo.'
-        });
-      }
+      showNotification(
+        'Atualização Disponível',
+        'Uma nova versão do Habbit foi baixada e será instalada ao reiniciar o aplicativo.'
+      );
     });
 
     autoUpdater.on('error', (error) => {
@@ -284,18 +341,32 @@ app.whenReady().then(async () => {
   setupAutoUpdater();
   createTray();
 
+  // Check Accessibility permission on macOS (needed for global shortcuts & clipboard automation)
+  if (!checkAccessibilityPermission()) {
+    showNotification(
+      'Permissão Necessária',
+      'O Habbit precisa de permissão de Acessibilidade para funcionar. Vá em Ajustes do Sistema > Privacidade e Segurança > Acessibilidade.'
+    );
+  }
+
+  logger.info('App started, platform:', process.platform, 'arch:', process.arch);
+
   // Try to auto-login from saved token
   const user = await authService.initializeFromStorage();
 
   if (user) {
+    logger.info('User loaded from storage:', user.email, 'shortcut:', user.shortcut);
     // Register keyboard shortcut with platform normalization
     const platformShortcut = normalizeShortcut(user.shortcut);
+    logger.info('Registering keyboard shortcut:', platformShortcut);
     keyboardService.register(platformShortcut, async () => {
+      logger.info('Shortcut triggered!');
       await correctionService.correctSelectedText();
     });
 
     updateTrayMenu();
   } else {
+    logger.info('No stored user, showing login window');
     // Show login window
     createLoginWindow();
   }

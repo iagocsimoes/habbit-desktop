@@ -2,6 +2,7 @@ import { authApi } from '../api/auth';
 import apiClient from '../api/client';
 import secureStorage from './storage';
 import { User, CorrectionStyle } from '../types';
+import { getDefaultShortcut } from '../utils/platform';
 
 class AuthService {
   private currentUser: User | null = null;
@@ -19,6 +20,9 @@ class AuthService {
 
       // Get user data
       const { user } = await authApi.getCurrentUser();
+      // Ensure defaults for fields the API may not return
+      user.shortcut = user.shortcut || getDefaultShortcut();
+      user.correctionStyle = user.correctionStyle || CorrectionStyle.CORRECT;
       this.currentUser = user;
 
       return user;
@@ -40,6 +44,8 @@ class AuthService {
 
       // Try to get user data
       const { user } = await authApi.getCurrentUser();
+      user.shortcut = user.shortcut || getDefaultShortcut();
+      user.correctionStyle = user.correctionStyle || CorrectionStyle.CORRECT;
       this.currentUser = user;
 
       return user;

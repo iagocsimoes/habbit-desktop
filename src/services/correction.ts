@@ -2,6 +2,7 @@ import { correctionsApi } from '../api/corrections';
 import clipboardService from './clipboard';
 import { BrowserWindow } from 'electron';
 import path from 'path';
+import { logger } from '../utils/logger';
 
 class CorrectionService {
   private toastWindow: BrowserWindow | null = null;
@@ -106,13 +107,16 @@ class CorrectionService {
       // Validate language parameter
       const validLanguages = ['pt', 'en', 'es'];
       if (!validLanguages.includes(language)) {
-        language = 'pt'; // Default to Portuguese
+        language = 'pt';
       }
 
       // Capture selected text
+      logger.info('Shortcut triggered, capturing selected text...');
       const selectedText = await clipboardService.captureSelectedText();
+      logger.info('Captured text:', selectedText ? `"${selectedText.substring(0, 50)}..." (${selectedText.length} chars)` : '(empty)');
 
       if (!selectedText || selectedText.trim().length === 0) {
+        logger.warn('No text selected');
         this.createToast('Nenhum texto selecionado', 'error');
         return;
       }
@@ -124,7 +128,9 @@ class CorrectionService {
       }
 
       // Call API to correct text
+      logger.info('Calling correction API...');
       const response = await correctionsApi.createCorrection(selectedText, language);
+      logger.info('API response:', response);
 
       const correctedText = response.correction.correctedText;
 
@@ -134,12 +140,13 @@ class CorrectionService {
       }
 
       // Replace selected text with corrected text
+      logger.info('Replacing text with:', correctedText.substring(0, 50));
       await clipboardService.replaceSelectedText(correctedText);
 
       // Show minimal success toast
       this.createToast('Texto corrigido', 'success');
     } catch (error) {
-      console.error('Error correcting text:', error);
+      logger.error('Error correcting text:', error instanceof Error ? error.message : error);
 
       const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
       this.createToast(errorMessage, 'error');

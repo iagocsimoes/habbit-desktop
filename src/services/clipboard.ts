@@ -20,8 +20,8 @@ class ClipboardService {
       // Simulate Ctrl+C to copy selected text
       await this.simulateCopy();
 
-      // Wait a bit for the clipboard to update
-      await this.sleep(100);
+      // Wait for the clipboard to update (macOS needs more time)
+      await this.sleep(300);
 
       // Read the selected text
       const selectedText = clipboard.readText();

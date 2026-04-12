@@ -7,7 +7,7 @@ class ApiClient {
   private requestCount: Map<string, number> = new Map();
   private readonly MAX_REQUESTS_PER_MINUTE = 60;
 
-  constructor(baseURL: string = 'http://localhost:3333') {
+  constructor(baseURL: string = 'https://api.habbitai.app') {
     this.client = axios.create({
       baseURL,
       headers: {

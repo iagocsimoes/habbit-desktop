@@ -35,19 +35,43 @@ async function loadUserData() {
 function setupShortcutCapture() {
   const shortcutInput = document.getElementById('shortcut');
 
+  const isMacPlatform = navigator.platform.toUpperCase().includes('MAC');
+
+  // Map e.code to a readable key name that matches node-global-key-listener
+  function codeToKeyName(code) {
+    const codeMap = {
+      'Period': '.', 'Comma': ',', 'Slash': '/', 'Backslash': '\\',
+      'BracketLeft': '[', 'BracketRight': ']', 'Semicolon': ';',
+      'Quote': "'", 'Minus': '-', 'Equal': '=', 'Backquote': '`',
+      'Space': 'SPACE', 'Enter': 'ENTER', 'Backspace': 'BACKSPACE',
+      'Tab': 'TAB', 'Escape': 'ESC',
+      'ArrowUp': 'UP', 'ArrowDown': 'DOWN', 'ArrowLeft': 'LEFT', 'ArrowRight': 'RIGHT',
+    };
+    if (codeMap[code]) return codeMap[code];
+    if (code.startsWith('Key')) return code.slice(3);
+    if (code.startsWith('Digit')) return code.slice(5);
+    if (code.startsWith('Numpad')) return code.slice(6);
+    return code.toUpperCase();
+  }
+
   shortcutInput.addEventListener('keydown', (e) => {
     e.preventDefault();
 
     const keys = [];
 
-    if (e.ctrlKey) keys.push('Ctrl');
+    if (isMacPlatform) {
+      if (e.metaKey) keys.push('Cmd');
+      if (e.ctrlKey) keys.push('Ctrl');
+    } else {
+      if (e.ctrlKey) keys.push('Ctrl');
+    }
     if (e.altKey) keys.push('Alt');
     if (e.shiftKey) keys.push('Shift');
-    if (e.metaKey) keys.push('Cmd');
+    if (!isMacPlatform && e.metaKey) keys.push('Cmd');
 
-    // Get the actual key (not modifiers)
-    if (!['Control', 'Alt', 'Shift', 'Meta'].includes(e.key)) {
-      keys.push(e.key.toUpperCase());
+    // Use e.code to get the physical key, not the OS-transformed character
+    if (!['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight', 'MetaLeft', 'MetaRight'].includes(e.code)) {
+      keys.push(codeToKeyName(e.code));
     }
 
     if (keys.length > 1) {

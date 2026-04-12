@@ -5,7 +5,7 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc && node copy-files.js",
-    "prebuild": "node convert-icon.js",
+    "prebuild": "node convert-logo.js",
     "watch": "tsc --watch",
     "start": "pnpm run build && cross-env NODE_ENV=production electron .",
     "dev": "pnpm run build && cross-env NODE_ENV=development electron .",
@@ -52,7 +52,9 @@
       "node_modules/**/*",
       "package.json",
       "build/icon.png",
-      "build/icon.ico"
+      "build/icon.ico",
+      "build/trayIcon.png",
+      "build/trayIcon@2x.png"
     ],
     "directories": {
       "output": "release"
@@ -60,7 +62,7 @@
     "publish": [
       {
         "provider": "generic",
-        "url": "http://134.195.90.241:3333/downloads"
+        "url": "https://api.habbitai.app/downloads"
       }
     ],
     "win": {
@@ -98,17 +100,31 @@
           ]
         }
       ],
-      "category": "public.app-category.productivity"
+      "category": "public.app-category.productivity",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "LSUIElement": true,
+        "NSAppleEventsUsageDescription": "O Habbit precisa enviar eventos para copiar e colar texto automaticamente.",
+        "NSAccessibilityUsageDescription": "O Habbit precisa de acesso à acessibilidade para capturar atalhos globais de teclado e corrigir texto automaticamente."
+      }
     },
     "dmg": {
+      "background": null,
+      "window": {
+        "width": 540,
+        "height": 380
+      },
       "contents": [
         {
-          "x": 130,
-          "y": 220
+          "x": 140,
+          "y": 200
         },
         {
-          "x": 410,
-          "y": 220,
+          "x": 400,
+          "y": 200,
           "type": "link",
           "path": "/Applications"
         }
@@ -121,5 +137,11 @@
       ],
       "category": "Utility"
     }
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "electron",
+      "sharp"
+    ]
   }
 }
