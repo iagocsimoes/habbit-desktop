@@ -13,7 +13,9 @@ function write(level: string, ...args: any[]): void {
   const line = `[${timestamp()}] [${level}] ${msg}\n`;
   try {
     fs.appendFileSync(logFile, line);
-  } catch {}
+  } catch {
+    process.stderr.write(`[LOG WRITE FAILED] ${line}`);
+  }
   // Also output to stdout for dev mode
   if (level === 'ERROR') {
     console.error(line.trim());

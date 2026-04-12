@@ -1,6 +1,7 @@
 import { clipboard } from 'electron';
 import { exec } from 'child_process';
 import { promisify } from 'util';
+import { logger } from '../utils/logger';
 
 const execAsync = promisify(exec);
 
@@ -31,8 +32,8 @@ class ClipboardService {
 
       return selectedText || '';
     } catch (error) {
-      console.error('Error capturing selected text:', error);
-      return '';
+      logger.error('Erro ao capturar texto selecionado:', error instanceof Error ? error.message : error);
+      throw new Error('Falha ao capturar texto. Verifique as permissões do sistema.');
     }
   }
 
@@ -60,7 +61,7 @@ class ClipboardService {
       // Restore original clipboard
       clipboard.writeText(originalClipboard);
     } catch (error) {
-      console.error('Error replacing selected text:', error);
+      logger.error('Erro ao substituir texto selecionado:', error instanceof Error ? error.message : error);
       throw error;
     }
   }
@@ -69,15 +70,17 @@ class ClipboardService {
    * Simulates Ctrl+C using OS-specific commands
    */
   private async simulateCopy(): Promise<void> {
-    if (process.platform === 'win32') {
-      // Windows: Use PowerShell to send Ctrl+C
-      await execAsync('powershell -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^c\')"');
-    } else if (process.platform === 'darwin') {
-      // macOS: Use AppleScript
-      await execAsync('osascript -e \'tell application "System Events" to keystroke "c" using command down\'');
-    } else {
-      // Linux: Use xdotool
-      await execAsync('xdotool key ctrl+c');
+    try {
+      if (process.platform === 'win32') {
+        await execAsync('powershell -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^c\')"');
+      } else if (process.platform === 'darwin') {
+        await execAsync('osascript -e \'tell application "System Events" to keystroke "c" using command down\'');
+      } else {
+        await execAsync('xdotool key ctrl+c');
+      }
+    } catch (error) {
+      logger.error('Falha ao simular cópia no', process.platform, ':', error instanceof Error ? error.message : error);
+      throw error;
     }
   }
 
@@ -85,15 +88,17 @@ class ClipboardService {
    * Simulates Ctrl+V using OS-specific commands
    */
   private async simulatePaste(): Promise<void> {
-    if (process.platform === 'win32') {
-      // Windows: Use PowerShell to send Ctrl+V
-      await execAsync('powershell -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^v\')"');
-    } else if (process.platform === 'darwin') {
-      // macOS: Use AppleScript
-      await execAsync('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
-    } else {
-      // Linux: Use xdotool
-      await execAsync('xdotool key ctrl+v');
+    try {
+      if (process.platform === 'win32') {
+        await execAsync('powershell -command "$wshell = New-Object -ComObject wscript.shell; $wshell.SendKeys(\'^v\')"');
+      } else if (process.platform === 'darwin') {
+        await execAsync('osascript -e \'tell application "System Events" to keystroke "v" using command down\'');
+      } else {
+        await execAsync('xdotool key ctrl+v');
+      }
+    } catch (error) {
+      logger.error('Falha ao simular colagem no', process.platform, ':', error instanceof Error ? error.message : error);
+      throw error;
     }
   }
 

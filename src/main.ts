@@ -31,9 +31,12 @@ function checkAccessibilityPermission(): boolean {
         const user = authService.getCurrentUser();
         if (user) {
           const platformShortcut = normalizeShortcut(user.shortcut);
-          keyboardService.register(platformShortcut, async () => {
+          const registered = keyboardService.register(platformShortcut, async () => {
             await correctionService.correctSelectedText();
           });
+          if (!registered) {
+            showNotification('Erro no Habbit', 'Não foi possível registrar o atalho de teclado. Tente reiniciar o aplicativo.');
+          }
         }
       }
     }, 2000);
@@ -221,10 +224,15 @@ function setupIpcHandlers() {
       // Register keyboard shortcut with platform normalization
       const platformShortcut = normalizeShortcut(user.shortcut);
       logger.info('Registering keyboard shortcut after login:', platformShortcut);
-      keyboardService.register(platformShortcut, async () => {
+      const registered = keyboardService.register(platformShortcut, async () => {
         logger.info('Shortcut triggered!');
         await correctionService.correctSelectedText();
       });
+
+      if (!registered) {
+        logger.error('Falha ao registrar atalho de teclado após login');
+        showNotification('Erro no Habbit', 'Não foi possível registrar o atalho de teclado. Tente reiniciar o aplicativo.');
+      }
 
       updateTrayMenu();
 
@@ -337,38 +345,48 @@ function setupAutoUpdater() {
 
 // App lifecycle
 app.whenReady().then(async () => {
-  setupIpcHandlers();
-  setupAutoUpdater();
-  createTray();
+  try {
+    setupIpcHandlers();
+    setupAutoUpdater();
+    createTray();
 
-  // Check Accessibility permission on macOS (needed for global shortcuts & clipboard automation)
-  if (!checkAccessibilityPermission()) {
-    showNotification(
-      'Permissão Necessária',
-      'O Habbit precisa de permissão de Acessibilidade para funcionar. Vá em Ajustes do Sistema > Privacidade e Segurança > Acessibilidade.'
-    );
-  }
+    // Check Accessibility permission on macOS (needed for global shortcuts & clipboard automation)
+    if (!checkAccessibilityPermission()) {
+      showNotification(
+        'Permissão Necessária',
+        'O Habbit precisa de permissão de Acessibilidade para funcionar. Vá em Ajustes do Sistema > Privacidade e Segurança > Acessibilidade.'
+      );
+    }
 
-  logger.info('App started, platform:', process.platform, 'arch:', process.arch);
+    logger.info('App started, platform:', process.platform, 'arch:', process.arch);
 
-  // Try to auto-login from saved token
-  const user = await authService.initializeFromStorage();
+    // Try to auto-login from saved token
+    const user = await authService.initializeFromStorage();
 
-  if (user) {
-    logger.info('User loaded from storage:', user.email, 'shortcut:', user.shortcut);
-    // Register keyboard shortcut with platform normalization
-    const platformShortcut = normalizeShortcut(user.shortcut);
-    logger.info('Registering keyboard shortcut:', platformShortcut);
-    keyboardService.register(platformShortcut, async () => {
-      logger.info('Shortcut triggered!');
-      await correctionService.correctSelectedText();
-    });
+    if (user) {
+      logger.info('User loaded from storage:', user.email, 'shortcut:', user.shortcut);
+      // Register keyboard shortcut with platform normalization
+      const platformShortcut = normalizeShortcut(user.shortcut);
+      logger.info('Registering keyboard shortcut:', platformShortcut);
+      const registered = keyboardService.register(platformShortcut, async () => {
+        logger.info('Shortcut triggered!');
+        await correctionService.correctSelectedText();
+      });
 
-    updateTrayMenu();
-  } else {
-    logger.info('No stored user, showing login window');
-    // Show login window
-    createLoginWindow();
+      if (!registered) {
+        logger.error('Falha ao registrar atalho de teclado no startup');
+        showNotification('Erro no Habbit', 'Não foi possível registrar o atalho de teclado. Tente reiniciar o aplicativo.');
+      }
+
+      updateTrayMenu();
+    } else {
+      logger.info('No stored user, showing login window');
+      // Show login window
+      createLoginWindow();
+    }
+  } catch (error) {
+    logger.error('Erro fatal na inicialização:', error instanceof Error ? error.message : error);
+    showNotification('Erro no Habbit', 'Erro ao iniciar o aplicativo. Verifique os logs.');
   }
 });
 

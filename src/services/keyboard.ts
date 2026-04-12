@@ -60,13 +60,22 @@ class KeyboardService {
     this.listener = null;
   }
 
-  register(shortcut: string, callback: ShortcutCallback): void {
+  register(shortcut: string, callback: ShortcutCallback): boolean {
     this.currentShortcut = shortcut;
     this.callback = callback;
 
     // Recreate listener to remove old listeners
     this.safeKill();
-    this.listener = new GlobalKeyboardListener();
+
+    try {
+      this.listener = new GlobalKeyboardListener();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      logger.error('Falha ao inicializar o listener de teclado:', msg);
+      this.listener = null;
+      this.isEnabled = false;
+      return false;
+    }
 
     if (this.listener) {
       const shortcutConfig = this.parseShortcut(shortcut);
@@ -103,12 +112,15 @@ class KeyboardService {
 
       this.isEnabled = true;
     }
+
+    return true;
   }
 
-  updateShortcut(shortcut: string): void {
+  updateShortcut(shortcut: string): boolean {
     if (this.callback) {
-      this.register(shortcut, this.callback);
+      return this.register(shortcut, this.callback);
     }
+    return false;
   }
 
   enable(): void {
