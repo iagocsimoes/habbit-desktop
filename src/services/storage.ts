@@ -1,10 +1,23 @@
 import Store from 'electron-store';
 import { safeStorage } from 'electron';
 
+export type NotificationStyle = 'super-minimal' | 'minimal' | 'standard' | 'detailed';
+
+export interface NotificationSettings {
+  enabled: boolean;
+  style: NotificationStyle;
+}
+
+const DEFAULT_NOTIFICATIONS: NotificationSettings = {
+  enabled: true,
+  style: 'minimal',
+};
+
 interface StoreSchema {
   token?: string;
   tokenEncrypted?: boolean;
   userEmail?: string;
+  notifications?: NotificationSettings;
 }
 
 class SecureStorage {
@@ -97,6 +110,21 @@ class SecureStorage {
     } catch {
       return undefined;
     }
+  }
+
+  getNotificationSettings(): NotificationSettings {
+    try {
+      const stored = (this.getStore() as any).get('notifications') as NotificationSettings | undefined;
+      return stored ? { ...DEFAULT_NOTIFICATIONS, ...stored } : { ...DEFAULT_NOTIFICATIONS };
+    } catch {
+      return { ...DEFAULT_NOTIFICATIONS };
+    }
+  }
+
+  setNotificationSettings(settings: NotificationSettings): void {
+    try {
+      (this.getStore() as any).set('notifications', settings);
+    } catch {}
   }
 
   clearAll(): void {

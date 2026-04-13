@@ -156,9 +156,62 @@ function handleMinimizeWindow() {
   window.electronAPI.minimizeWindow();
 }
 
+// Notification settings
+async function loadNotificationSettings() {
+  try {
+    const settings = await window.electronAPI.getNotificationSettings();
+    document.getElementById('notifEnabled').checked = settings.enabled;
+    document.getElementById('notifStyle').value = settings.style || 'minimal';
+    updateStyleVisibility(settings.enabled);
+  } catch (error) {
+    console.error('Error loading notification settings:', error);
+  }
+}
+
+function updateStyleVisibility(enabled) {
+  document.getElementById('notifStyleGroup').style.opacity = enabled ? '1' : '0.4';
+  document.getElementById('notifStyleGroup').style.pointerEvents = enabled ? 'auto' : 'none';
+}
+
+async function saveNotificationSettings() {
+  const settings = {
+    enabled: document.getElementById('notifEnabled').checked,
+    style: document.getElementById('notifStyle').value,
+  };
+  try {
+    await window.electronAPI.updateNotificationSettings(settings);
+  } catch (error) {
+    console.error('Error saving notification settings:', error);
+  }
+}
+
+function setupNotificationToggles() {
+  document.getElementById('notifEnabled').addEventListener('change', (e) => {
+    updateStyleVisibility(e.target.checked);
+    saveNotificationSettings();
+  });
+  document.getElementById('notifStyle').addEventListener('change', saveNotificationSettings);
+}
+
+// Tab navigation
+function setupTabs() {
+  const buttons = document.querySelectorAll('.tab-btn');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      buttons.forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+}
+
 // Load data on page load
+setupTabs();
 loadUserData();
 loadStats();
+loadNotificationSettings();
+setupNotificationToggles();
 
 // Auto-refresh stats every 30 seconds
 setInterval(() => {

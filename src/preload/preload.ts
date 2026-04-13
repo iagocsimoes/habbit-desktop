@@ -37,6 +37,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // Stats
   getStats: () => ipcRenderer.invoke('stats:get'),
 
+  // Notifications
+  getNotificationSettings: () => ipcRenderer.invoke('settings:getNotifications'),
+  updateNotificationSettings: (settings: any) => ipcRenderer.invoke('settings:updateNotifications', settings),
+
   // Window
   closeWindow: () => ipcRenderer.send('window:close'),
   minimizeWindow: () => ipcRenderer.send('window:minimize'),

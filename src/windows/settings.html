@@ -6,11 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; connect-src https://api.habbitai.app; img-src 'self' data:; font-src 'self'">
   <title>Habbit - Configurações</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -18,100 +14,71 @@
       color: #e0e0e0;
       height: 100vh;
       overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
 
-    .titlebar {
-      height: 32px;
-      background: #0a0a0a;
-      border-bottom: 1px solid #1a1a1a;
+    /* macOS titlebar spacer */
+    .mac-titlebar-spacer {
+      height: 40px;
+      -webkit-app-region: drag;
+      flex-shrink: 0;
+    }
+
+    /* Tab navigation */
+    .tab-nav {
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 12px;
+      padding: 0 24px;
+      gap: 4px;
+      border-bottom: 1px solid #1a1a1a;
+      flex-shrink: 0;
       -webkit-app-region: drag;
     }
 
-    .titlebar-title {
-      font-size: 12px;
-      color: #999;
+    .tab-btn {
+      padding: 10px 16px;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 13px;
       font-weight: 500;
-    }
-
-    .titlebar-buttons {
-      display: flex;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
       -webkit-app-region: no-drag;
     }
 
-    .titlebar-btn {
-      width: 46px;
-      height: 32px;
-      background: transparent;
-      border: none;
+    .tab-btn:hover {
+      color: #999;
+    }
+
+    .tab-btn.active {
       color: #fff;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Segoe MDL2 Assets', sans-serif;
-      font-size: 10px;
-      transition: background 0.15s;
+      border-bottom-color: #fff;
     }
 
-    .titlebar-btn:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
-
-    .btn-close:hover {
-      background: #e81123;
-    }
-
-    .container {
-      padding: 24px;
-      height: 100vh;
+    /* Tab content */
+    .tab-content {
+      flex: 1;
       overflow-y: auto;
+      padding: 24px;
     }
 
-    /* macOS: add padding for traffic light buttons */
-    @supports (-webkit-app-region: drag) {
-      .mac-titlebar-spacer {
-        height: 28px;
-        -webkit-app-region: drag;
-      }
+    .tab-panel {
+      display: none;
+    }
+
+    .tab-panel.active {
+      display: block;
     }
 
     /* Custom scrollbar */
-    .container::-webkit-scrollbar {
-      width: 8px;
-    }
+    .tab-content::-webkit-scrollbar { width: 6px; }
+    .tab-content::-webkit-scrollbar-track { background: #0a0a0a; }
+    .tab-content::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 3px; }
+    .tab-content::-webkit-scrollbar-thumb:hover { background: #3a3a3a; }
 
-    .container::-webkit-scrollbar-track {
-      background: #0a0a0a;
-    }
-
-    .container::-webkit-scrollbar-thumb {
-      background: #2a2a2a;
-      border-radius: 4px;
-    }
-
-    .container::-webkit-scrollbar-thumb:hover {
-      background: #3a3a3a;
-    }
-
-    .header {
-      margin-bottom: 32px;
-    }
-
-    .header h1 {
-      font-size: 24px;
-      font-weight: 300;
-      margin-bottom: 8px;
-    }
-
-    .header p {
-      color: #666;
-      font-size: 14px;
-    }
-
+    /* Sections */
     .section {
       background: #121212;
       border-radius: 12px;
@@ -120,25 +87,23 @@
       border: 1px solid #1a1a1a;
     }
 
+    .section:last-child { margin-bottom: 0; }
+
     .section-title {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 600;
       margin-bottom: 16px;
       color: #fff;
     }
 
-    .form-group {
-      margin-bottom: 20px;
-    }
-
-    .form-group:last-child {
-      margin-bottom: 0;
-    }
+    /* Forms */
+    .form-group { margin-bottom: 20px; }
+    .form-group:last-child { margin-bottom: 0; }
 
     label {
       display: block;
       margin-bottom: 8px;
-      font-size: 14px;
+      font-size: 13px;
       color: #999;
       font-weight: 500;
     }
@@ -160,15 +125,10 @@
       background: #202020;
     }
 
-    select {
-      cursor: pointer;
-    }
+    select { cursor: pointer; }
+    select option { background: #1a1a1a; color: #e0e0e0; }
 
-    select option {
-      background: #1a1a1a;
-      color: #e0e0e0;
-    }
-
+    /* Info rows */
     .info-row {
       display: flex;
       justify-content: space-between;
@@ -176,26 +136,15 @@
       border-bottom: 1px solid #1a1a1a;
     }
 
-    .info-row:last-child {
-      border-bottom: none;
-    }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { color: #999; font-size: 14px; }
+    .info-value { color: #e0e0e0; font-size: 14px; font-weight: 500; }
 
-    .info-label {
-      color: #999;
-      font-size: 14px;
-    }
-
-    .info-value {
-      color: #e0e0e0;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
+    /* Stats */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 16px;
-      margin-top: 16px;
     }
 
     .stat-card {
@@ -205,18 +154,10 @@
       border: 1px solid #2a2a2a;
     }
 
-    .stat-label {
-      color: #666;
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
+    .stat-label { color: #666; font-size: 12px; margin-bottom: 8px; }
+    .stat-value { color: #fff; font-size: 24px; font-weight: 600; }
 
-    .stat-value {
-      color: #fff;
-      font-size: 24px;
-      font-weight: 600;
-    }
-
+    /* Buttons */
     .btn {
       padding: 10px 20px;
       border: none;
@@ -227,118 +168,181 @@
       transition: all 0.2s;
     }
 
-    .btn-primary {
-      background: #fff;
-      color: #0a0a0a;
+    .btn-primary { background: #fff; color: #0a0a0a; }
+    .btn-primary:hover { background: #f0f0f0; }
+    .btn-danger { background: #2a1515; color: #ff6b6b; border: 1px solid #3a2020; }
+    .btn-danger:hover { background: #3a2020; }
+
+    /* Toggle */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
     }
 
-    .btn-primary:hover {
-      background: #f0f0f0;
+    .toggle-info { display: flex; flex-direction: column; gap: 2px; }
+    .toggle-label { font-size: 14px; color: #e0e0e0; font-weight: 500; }
+    .toggle-desc { font-size: 12px; color: #666; }
+
+    .toggle { position: relative; width: 40px; height: 22px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+
+    .toggle-slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #2a2a2a; border-radius: 11px;
+      transition: background 0.2s;
     }
 
-    .btn-danger {
-      background: #2a1515;
-      color: #ff6b6b;
-      border: 1px solid #3a2020;
+    .toggle-slider::before {
+      content: ''; position: absolute;
+      height: 16px; width: 16px; left: 3px; bottom: 3px;
+      background: #666; border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
     }
 
-    .btn-danger:hover {
-      background: #3a2020;
-    }
+    .toggle input:checked + .toggle-slider { background: #333; }
+    .toggle input:checked + .toggle-slider::before { transform: translateX(18px); background: #fff; }
 
+    /* Success message */
     .success-message {
-      background: #1a2a1a;
-      color: #6bff6b;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      margin-top: 12px;
-      display: none;
-      border: 1px solid #2a3a2a;
+      background: #1a2a1a; color: #6bff6b;
+      padding: 12px; border-radius: 8px; font-size: 14px;
+      margin-top: 12px; display: none; border: 1px solid #2a3a2a;
     }
+    .success-message.show { display: block; }
 
-    .success-message.show {
-      display: block;
+    /* Footer actions */
+    .footer-actions {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid #1a1a1a;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="mac-titlebar-spacer" id="macTitlebar"></div>
-    <div class="header">
-      <h1>Configurações</h1>
-      <p>Gerencie suas preferências e informações da conta</p>
-    </div>
+  <div class="mac-titlebar-spacer" id="macTitlebar"></div>
 
-    <!-- User Info Section -->
-    <div class="section">
-      <div class="section-title">Informações da Conta</div>
-      <div class="info-row">
-        <span class="info-label">Email</span>
-        <span class="info-value" id="userEmail">-</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Nome</span>
-        <span class="info-value" id="userName">-</span>
-      </div>
-      <div class="info-row">
-        <span class="info-label">Plano</span>
-        <span class="info-value" id="userPlan">-</span>
-      </div>
-    </div>
+  <!-- Tab Navigation -->
+  <nav class="tab-nav">
+    <button class="tab-btn active" data-tab="geral">Geral</button>
+    <button class="tab-btn" data-tab="correcao">Correção</button>
+    <button class="tab-btn" data-tab="notificacoes">Notificações</button>
+    <button class="tab-btn" data-tab="conta">Conta</button>
+  </nav>
 
-    <!-- Shortcut Section -->
-    <div class="section">
-      <div class="section-title">Atalho de Teclado</div>
-      <form id="shortcutForm">
-        <div class="form-group">
-          <label for="shortcut">Pressione as teclas do atalho</label>
-          <input type="text" id="shortcut" placeholder="Pressione as teclas..." readonly />
+  <!-- Tab Content -->
+  <div class="tab-content">
+
+    <!-- Geral -->
+    <div class="tab-panel active" id="tab-geral">
+      <div class="section">
+        <div class="section-title">Atalho de Teclado</div>
+        <form id="shortcutForm">
+          <div class="form-group">
+            <label for="shortcut">Pressione as teclas do atalho</label>
+            <input type="text" id="shortcut" placeholder="Pressione as teclas..." readonly />
+          </div>
+          <button type="submit" class="btn btn-primary">Salvar Atalho</button>
+          <div id="shortcutSuccess" class="success-message">Atalho atualizado com sucesso!</div>
+        </form>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Estatísticas de Uso</div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Correções este mês</div>
+            <div class="stat-value" id="totalCorrections">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Limite mensal</div>
+            <div class="stat-value" id="monthlyLimit">-</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tokens usados</div>
+            <div class="stat-value" id="tokensUsed">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Restantes</div>
+            <div class="stat-value" id="remaining">-</div>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary">Salvar Atalho</button>
-        <div id="shortcutSuccess" class="success-message">Atalho atualizado com sucesso!</div>
-      </form>
+      </div>
     </div>
 
-    <!-- Correction Style Section -->
-    <div class="section">
-      <div class="section-title">Estilo de Correção</div>
-      <form id="styleForm">
-        <div class="form-group">
-          <label for="correctionStyle">Escolha o estilo de correção</label>
-          <select id="correctionStyle" class="style-select">
-            <option value="correct">Padrão - Correção ortográfica e gramatical</option>
-            <option value="formal">Formal - Texto profissional e formal</option>
-            <option value="informal">Informal - Texto descontraído e coloquial</option>
-            <option value="concise">Conciso - Texto direto ao ponto</option>
-            <option value="detailed">Detalhado - Texto explicativo e detalhado</option>
+    <!-- Correção -->
+    <div class="tab-panel" id="tab-correcao">
+      <div class="section">
+        <div class="section-title">Estilo de Correção</div>
+        <form id="styleForm">
+          <div class="form-group">
+            <label for="correctionStyle">Escolha o estilo de correção</label>
+            <select id="correctionStyle">
+              <option value="correct">Padrão — Correção ortográfica e gramatical</option>
+              <option value="formal">Formal — Texto profissional e formal</option>
+              <option value="informal">Informal — Texto descontraído e coloquial</option>
+              <option value="concise">Conciso — Texto direto ao ponto</option>
+              <option value="detailed">Detalhado — Texto explicativo e detalhado</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Salvar Estilo</button>
+          <div id="styleSuccess" class="success-message">Estilo atualizado com sucesso!</div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Notificações -->
+    <div class="tab-panel" id="tab-notificacoes">
+      <div class="section">
+        <div class="section-title">Notificações</div>
+        <div class="toggle-row">
+          <div class="toggle-info">
+            <span class="toggle-label">Ativar notificações</span>
+            <span class="toggle-desc">Exibir avisos ao corrigir texto</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="notifEnabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+
+      <div class="section" id="notifStyleGroup">
+        <div class="section-title">Estilo Visual</div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="notifStyle">Aparência das notificações</label>
+          <select id="notifStyle">
+            <option value="super-minimal">Super minimalista — apenas ícones</option>
+            <option value="minimal">Minimalista — texto discreto</option>
+            <option value="standard">Padrão — com ícones e spinner</option>
+            <option value="detailed">Detalhado — com título e destaque</option>
           </select>
         </div>
-        <button type="submit" class="btn btn-primary">Salvar Estilo</button>
-        <div id="styleSuccess" class="success-message">Estilo atualizado com sucesso!</div>
-      </form>
+      </div>
     </div>
 
-    <!-- Stats Section -->
-    <div class="section">
-      <div class="section-title">Estatísticas de Uso</div>
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-label">Correções este mês</div>
-          <div class="stat-value" id="totalCorrections">0</div>
+    <!-- Conta -->
+    <div class="tab-panel" id="tab-conta">
+      <div class="section">
+        <div class="section-title">Informações da Conta</div>
+        <div class="info-row">
+          <span class="info-label">Email</span>
+          <span class="info-value" id="userEmail">-</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Limite mensal</div>
-          <div class="stat-value" id="monthlyLimit">-</div>
+        <div class="info-row">
+          <span class="info-label">Nome</span>
+          <span class="info-value" id="userName">-</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Tokens usados</div>
-          <div class="stat-value" id="tokensUsed">0</div>
+        <div class="info-row">
+          <span class="info-label">Plano</span>
+          <span class="info-value" id="userPlan">-</span>
         </div>
-        <div class="stat-card">
-          <div class="stat-label">Restantes</div>
-          <div class="stat-value" id="remaining">-</div>
-        </div>
+      </div>
+
+      <div class="footer-actions">
+        <button class="btn btn-danger" onclick="handleLogout()">Sair da Conta</button>
       </div>
     </div>
 

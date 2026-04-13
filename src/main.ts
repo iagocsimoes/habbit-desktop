@@ -4,6 +4,7 @@ import path from 'path';
 import authService from './services/auth';
 import keyboardService from './services/keyboard';
 import correctionService from './services/correction';
+import secureStorage from './services/storage';
 import { correctionsApi } from './api/corrections';
 import { isMac } from './utils/platform';
 import { logger } from './utils/logger';
@@ -287,6 +288,20 @@ function setupIpcHandlers() {
 
   ipcMain.handle('stats:get', async () => {
     return await correctionsApi.getStats();
+  });
+
+  ipcMain.handle('settings:getNotifications', async () => {
+    return secureStorage.getNotificationSettings();
+  });
+
+  ipcMain.handle('settings:updateNotifications', async (_, settings: any) => {
+    const validStyles = ['super-minimal', 'minimal', 'standard', 'detailed'];
+    const valid = {
+      enabled: typeof settings?.enabled === 'boolean' ? settings.enabled : true,
+      style: validStyles.includes(settings?.style) ? settings.style : 'minimal',
+    };
+    secureStorage.setNotificationSettings(valid);
+    correctionService.updateNotificationSettings(valid);
   });
 
   ipcMain.on('window:close', (event) => {
