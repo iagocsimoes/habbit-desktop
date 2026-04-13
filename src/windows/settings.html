@@ -228,6 +228,7 @@
   <nav class="tab-nav">
     <button class="tab-btn active" data-tab="geral">Geral</button>
     <button class="tab-btn" data-tab="correcao">Correção</button>
+    <button class="tab-btn" data-tab="resumo">Resumo</button>
     <button class="tab-btn" data-tab="notificacoes">Notificações</button>
     <button class="tab-btn" data-tab="conta">Conta</button>
   </nav>
@@ -246,6 +247,18 @@
           </div>
           <button type="submit" class="btn btn-primary">Salvar Atalho</button>
           <div id="shortcutSuccess" class="success-message">Atalho atualizado com sucesso!</div>
+        </form>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Atalho de Voz</div>
+        <form id="voiceShortcutForm">
+          <div class="form-group">
+            <label for="voiceShortcut">Pressione as teclas do atalho de voz</label>
+            <input type="text" id="voiceShortcut" placeholder="Pressione as teclas..." readonly />
+          </div>
+          <button type="submit" class="btn btn-primary">Salvar Atalho de Voz</button>
+          <div id="voiceShortcutSuccess" class="success-message">Atalho de voz atualizado com sucesso!</div>
         </form>
       </div>
 
@@ -290,6 +303,34 @@
           <button type="submit" class="btn btn-primary">Salvar Estilo</button>
           <div id="styleSuccess" class="success-message">Estilo atualizado com sucesso!</div>
         </form>
+      </div>
+    </div>
+
+    <!-- Resumo -->
+    <div class="tab-panel" id="tab-resumo">
+      <div class="section">
+        <div class="section-title">Atalho de Resumo</div>
+        <form id="summaryShortcutForm">
+          <div class="form-group">
+            <label for="summaryShortcut">Pressione as teclas do atalho de resumo</label>
+            <input type="text" id="summaryShortcut" placeholder="Pressione as teclas..." readonly />
+          </div>
+          <button type="submit" class="btn btn-primary">Salvar Atalho</button>
+          <div id="summaryShortcutSuccess" class="success-message">Atalho de resumo atualizado com sucesso!</div>
+        </form>
+      </div>
+
+      <div class="section">
+        <div class="section-title">Estilo de Resumo</div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label for="summaryStyle">Formato do resumo gerado</label>
+          <select id="summaryStyle">
+            <option value="bullets">Tópicos — Pontos curtos (max 7)</option>
+            <option value="paragraph">Parágrafo — 3 a 4 frases</option>
+            <option value="oneline">Uma linha — Frase única</option>
+            <option value="detailed">Detalhado — Resumo completo com seções</option>
+          </select>
+        </div>
       </div>
     </div>
 

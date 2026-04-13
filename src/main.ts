@@ -4,6 +4,8 @@ import path from 'path';
 import authService from './services/auth';
 import keyboardService from './services/keyboard';
 import correctionService from './services/correction';
+import voiceService from './services/voice';
+import summaryService from './services/summary';
 import secureStorage from './services/storage';
 import { correctionsApi } from './api/corrections';
 import { isMac } from './utils/platform';
@@ -37,6 +39,8 @@ function checkAccessibilityPermission(): boolean {
           if (!registered) {
             showNotification('Erro no Habbit', 'Não foi possível registrar o atalho de teclado. Tente reiniciar o aplicativo.');
           }
+          voiceService.register(user.voiceShortcut);
+          summaryService.register(user.summaryShortcut);
         }
       }
     }, 2000);
@@ -82,6 +86,8 @@ function updateTrayMenu() {
         if (user) {
           await authService.logout();
           keyboardService.destroy();
+          voiceService.destroy();
+          summaryService.destroy();
           updateTrayMenu();
           createLoginWindow();
         } else {
@@ -233,6 +239,14 @@ function setupIpcHandlers() {
         showNotification('Erro no Habbit', 'Não foi possível registrar o atalho de teclado. Tente reiniciar o aplicativo.');
       }
 
+      // Register voice shortcut
+      logger.info('Registering voice shortcut after login:', user.voiceShortcut);
+      voiceService.register(user.voiceShortcut);
+
+      // Register summary shortcut
+      logger.info('Registering summary shortcut after login:', user.summaryShortcut);
+      summaryService.register(user.summaryShortcut);
+
       updateTrayMenu();
 
       // Close login window and open settings
@@ -254,6 +268,8 @@ function setupIpcHandlers() {
   ipcMain.handle('auth:logout', async () => {
     await authService.logout();
     keyboardService.destroy();
+    voiceService.destroy();
+    summaryService.destroy();
     updateTrayMenu();
 
     if (settingsWindow) {
@@ -284,6 +300,36 @@ function setupIpcHandlers() {
     }
 
     await authService.updateCorrectionStyle(style as any);
+  });
+
+  ipcMain.handle('settings:updateVoiceShortcut', async (_, shortcut: string) => {
+    if (!validateShortcut(shortcut)) {
+      throw new Error('Atalho de voz inválido');
+    }
+
+    await authService.updateVoiceShortcut(shortcut);
+    voiceService.updateShortcut(shortcut);
+  });
+
+  ipcMain.handle('settings:updateSummaryShortcut', async (_, shortcut: string) => {
+    if (!validateShortcut(shortcut)) {
+      throw new Error('Atalho de resumo inválido');
+    }
+
+    await authService.updateSummaryShortcut(shortcut);
+    summaryService.updateShortcut(shortcut);
+  });
+
+  ipcMain.handle('settings:getSummary', async () => {
+    return secureStorage.getSummarySettings();
+  });
+
+  ipcMain.handle('settings:updateSummary', async (_, settings: any) => {
+    const validStyles = ['bullets', 'paragraph', 'oneline', 'detailed'];
+    const valid = {
+      style: validStyles.includes(settings?.style) ? settings.style : 'bullets',
+    };
+    secureStorage.setSummarySettings(valid);
   });
 
   ipcMain.handle('stats:get', async () => {
@@ -410,6 +456,14 @@ app.whenReady().then(async () => {
         showNotification('Erro no Habbit', 'Não foi possível registrar o atalho de teclado. Tente reiniciar o aplicativo.');
       }
 
+      // Register voice shortcut
+      logger.info('Registering voice shortcut:', user.voiceShortcut);
+      voiceService.register(user.voiceShortcut);
+
+      // Register summary shortcut
+      logger.info('Registering summary shortcut:', user.summaryShortcut);
+      summaryService.register(user.summaryShortcut);
+
       updateTrayMenu();
     } else {
       logger.info('No stored user, showing login window');
@@ -429,6 +483,8 @@ app.on('window-all-closed', () => {
 
 app.on('before-quit', () => {
   keyboardService.destroy();
+  voiceService.destroy();
+  summaryService.destroy();
 });
 
 // Security: Prevent navigation to external sites and other attacks

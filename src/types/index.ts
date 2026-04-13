@@ -23,6 +23,8 @@ export interface User {
   plan: UserPlan;
   role: UserRole;
   shortcut: string;
+  voiceShortcut: string;
+  summaryShortcut: string;
   correctionStyle?: CorrectionStyle;
   createdAt: string;
 }

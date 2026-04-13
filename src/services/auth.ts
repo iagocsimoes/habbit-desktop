@@ -2,7 +2,7 @@ import { authApi } from '../api/auth';
 import apiClient from '../api/client';
 import secureStorage from './storage';
 import { User, CorrectionStyle } from '../types';
-import { getDefaultShortcut } from '../utils/platform';
+import { getDefaultShortcut, getDefaultVoiceShortcut, getDefaultSummaryShortcut } from '../utils/platform';
 
 class AuthService {
   private currentUser: User | null = null;
@@ -22,6 +22,8 @@ class AuthService {
       const { user } = await authApi.getCurrentUser();
       // Ensure defaults for fields the API may not return
       user.shortcut = user.shortcut || getDefaultShortcut();
+      user.voiceShortcut = user.voiceShortcut || getDefaultVoiceShortcut();
+      user.summaryShortcut = user.summaryShortcut || getDefaultSummaryShortcut();
       user.correctionStyle = user.correctionStyle || CorrectionStyle.CORRECT;
       this.currentUser = user;
 
@@ -45,6 +47,8 @@ class AuthService {
       // Try to get user data
       const { user } = await authApi.getCurrentUser();
       user.shortcut = user.shortcut || getDefaultShortcut();
+      user.voiceShortcut = user.voiceShortcut || getDefaultVoiceShortcut();
+      user.summaryShortcut = user.summaryShortcut || getDefaultSummaryShortcut();
       user.correctionStyle = user.correctionStyle || CorrectionStyle.CORRECT;
       this.currentUser = user;
 
@@ -74,6 +78,20 @@ class AuthService {
     await authApi.updateCorrectionStyle(style);
     if (this.currentUser) {
       this.currentUser.correctionStyle = style;
+    }
+  }
+
+  async updateVoiceShortcut(voiceShortcut: string): Promise<void> {
+    await authApi.updateVoiceShortcut(voiceShortcut);
+    if (this.currentUser) {
+      this.currentUser.voiceShortcut = voiceShortcut;
+    }
+  }
+
+  async updateSummaryShortcut(summaryShortcut: string): Promise<void> {
+    await authApi.updateSummaryShortcut(summaryShortcut);
+    if (this.currentUser) {
+      this.currentUser.summaryShortcut = summaryShortcut;
     }
   }
 

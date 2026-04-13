@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'self'; media-src blob:">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: transparent;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+      -webkit-app-region: drag;
+      user-select: none;
+    }
+
+    .pill {
+      background: #1a1a1a;
+      border-radius: 20px;
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      border: 1px solid #2a2a2a;
+      opacity: 0;
+      transform: translateY(-8px);
+      animation: slideDown 0.2s ease-out forwards;
+    }
+
+    @keyframes slideDown {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Recording dot */
+    .rec-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff3b30;
+      animation: pulse 1.2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Waveform bars */
+    .waveform {
+      display: flex;
+      align-items: center;
+      gap: 2px;
+      height: 18px;
+    }
+
+    .wave-bar {
+      width: 3px;
+      background: #555;
+      border-radius: 2px;
+      transition: height 0.1s ease;
+      height: 4px;
+    }
+
+    .wave-bar.active {
+      background: #888;
+    }
+
+    /* Timer */
+    .timer {
+      font-size: 13px;
+      color: #888;
+      font-variant-numeric: tabular-nums;
+      min-width: 32px;
+      text-align: right;
+    }
+
+    /* Processing state */
+    .pill.processing .rec-dot { display: none; }
+    .pill.processing .waveform { display: none; }
+
+    .spinner {
+      display: none;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #333;
+      border-top-color: #888;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    .pill.processing .spinner { display: block; }
+
+    .status-text {
+      display: none;
+      font-size: 13px;
+      color: #888;
+    }
+
+    .pill.processing .status-text { display: block; }
+    .pill.processing .timer { display: none; }
+
+    /* Done state */
+    .pill.done {
+      animation: fadeOut 0.3s ease-out 0.5s forwards;
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; transform: translateY(-8px); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="pill" id="pill">
+    <div class="rec-dot"></div>
+    <div class="spinner"></div>
+    <div class="waveform" id="waveform"></div>
+    <div class="status-text" id="statusText">Transcrevendo</div>
+    <div class="timer" id="timer">0:00</div>
+  </div>
+
+  <script src="./voice-overlay.js"></script>
+</body>
+</html>

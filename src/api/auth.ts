@@ -44,4 +44,12 @@ export const authApi = {
   async updateCorrectionStyle(style: CorrectionStyle): Promise<void> {
     await apiClient.getClient().put('/auth/correction-style', { style });
   },
+
+  async updateVoiceShortcut(voiceShortcut: string): Promise<void> {
+    await apiClient.getClient().put('/auth/voice-shortcut', { voiceShortcut });
+  },
+
+  async updateSummaryShortcut(summaryShortcut: string): Promise<void> {
+    await apiClient.getClient().put('/auth/summary-shortcut', { summaryShortcut });
+  },
 };

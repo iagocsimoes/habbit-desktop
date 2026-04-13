@@ -18,10 +18,12 @@ async function loadUserData() {
     currentUser = await window.electronAPI.getCurrentUser();
 
     if (currentUser) {
-      document.getElementById('userEmail').innerHTML = sanitizeAndLimit(currentUser.email);
-      document.getElementById('userName').innerHTML = sanitizeAndLimit(currentUser.name || 'Não definido');
-      document.getElementById('userPlan').innerHTML = sanitizeAndLimit(currentUser.plan, 20);
+      document.getElementById('userEmail').textContent = sanitizeAndLimit(currentUser.email);
+      document.getElementById('userName').textContent = sanitizeAndLimit(currentUser.name || 'Não definido');
+      document.getElementById('userPlan').textContent = sanitizeAndLimit(currentUser.plan, 20);
       document.getElementById('shortcut').value = sanitizeAndLimit(currentUser.shortcut, 50);
+      document.getElementById('voiceShortcut').value = sanitizeAndLimit(currentUser.voiceShortcut || 'Ctrl+Shift+V', 50);
+      document.getElementById('summaryShortcut').value = sanitizeAndLimit(currentUser.summaryShortcut || 'Ctrl+Shift+S', 50);
       document.getElementById('correctionStyle').value = sanitizeAndLimit(currentUser.correctionStyle || 'correct', 20);
 
       // Setup shortcut capture
@@ -83,6 +85,64 @@ function setupShortcutCapture() {
     shortcutInput.value = '';
     shortcutInput.placeholder = 'Pressione as teclas...';
   });
+
+  // Voice shortcut capture (same logic)
+  const voiceShortcutInput = document.getElementById('voiceShortcut');
+
+  voiceShortcutInput.addEventListener('keydown', (e) => {
+    e.preventDefault();
+    const keys = [];
+    if (isMacPlatform) {
+      if (e.metaKey) keys.push('Cmd');
+      if (e.ctrlKey) keys.push('Ctrl');
+    } else {
+      if (e.ctrlKey) keys.push('Ctrl');
+    }
+    if (e.altKey) keys.push('Alt');
+    if (e.shiftKey) keys.push('Shift');
+    if (!isMacPlatform && e.metaKey) keys.push('Cmd');
+
+    if (!['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight', 'MetaLeft', 'MetaRight'].includes(e.code)) {
+      keys.push(codeToKeyName(e.code));
+    }
+    if (keys.length > 1) {
+      voiceShortcutInput.value = keys.join('+');
+    }
+  });
+
+  voiceShortcutInput.addEventListener('click', () => {
+    voiceShortcutInput.value = '';
+    voiceShortcutInput.placeholder = 'Pressione as teclas...';
+  });
+
+  // Summary shortcut capture (same logic)
+  const summaryShortcutInput = document.getElementById('summaryShortcut');
+
+  summaryShortcutInput.addEventListener('keydown', (e) => {
+    e.preventDefault();
+    const keys = [];
+    if (isMacPlatform) {
+      if (e.metaKey) keys.push('Cmd');
+      if (e.ctrlKey) keys.push('Ctrl');
+    } else {
+      if (e.ctrlKey) keys.push('Ctrl');
+    }
+    if (e.altKey) keys.push('Alt');
+    if (e.shiftKey) keys.push('Shift');
+    if (!isMacPlatform && e.metaKey) keys.push('Cmd');
+
+    if (!['ControlLeft', 'ControlRight', 'AltLeft', 'AltRight', 'ShiftLeft', 'ShiftRight', 'MetaLeft', 'MetaRight'].includes(e.code)) {
+      keys.push(codeToKeyName(e.code));
+    }
+    if (keys.length > 1) {
+      summaryShortcutInput.value = keys.join('+');
+    }
+  });
+
+  summaryShortcutInput.addEventListener('click', () => {
+    summaryShortcutInput.value = '';
+    summaryShortcutInput.placeholder = 'Pressione as teclas...';
+  });
 }
 
 async function loadStats() {
@@ -120,6 +180,42 @@ document.getElementById('shortcutForm').addEventListener('submit', async (e) => 
   } catch (error) {
     const safeMessage = sanitizeAndLimit(error?.message || 'Erro desconhecido', 200);
     alert('Erro ao atualizar atalho: ' + safeMessage);
+  }
+});
+
+document.getElementById('voiceShortcutForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const voiceShortcut = document.getElementById('voiceShortcut').value.trim();
+  if (!voiceShortcut) return;
+
+  try {
+    await window.electronAPI.updateVoiceShortcut(voiceShortcut);
+
+    const successMsg = document.getElementById('voiceShortcutSuccess');
+    successMsg.classList.add('show');
+    setTimeout(() => successMsg.classList.remove('show'), 3000);
+  } catch (error) {
+    const safeMessage = sanitizeAndLimit(error?.message || 'Erro desconhecido', 200);
+    alert('Erro ao atualizar atalho de voz: ' + safeMessage);
+  }
+});
+
+document.getElementById('summaryShortcutForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const summaryShortcut = document.getElementById('summaryShortcut').value.trim();
+  if (!summaryShortcut) return;
+
+  try {
+    await window.electronAPI.updateSummaryShortcut(summaryShortcut);
+
+    const successMsg = document.getElementById('summaryShortcutSuccess');
+    successMsg.classList.add('show');
+    setTimeout(() => successMsg.classList.remove('show'), 3000);
+  } catch (error) {
+    const safeMessage = sanitizeAndLimit(error?.message || 'Erro desconhecido', 200);
+    alert('Erro ao atualizar atalho de resumo: ' + safeMessage);
   }
 });
 
@@ -206,12 +302,35 @@ function setupTabs() {
   });
 }
 
+// Summary settings
+async function loadSummarySettings() {
+  try {
+    const settings = await window.electronAPI.getSummarySettings();
+    document.getElementById('summaryStyle').value = settings.style || 'bullets';
+  } catch (error) {
+    console.error('Error loading summary settings:', error);
+  }
+}
+
+function setupSummaryStyle() {
+  document.getElementById('summaryStyle').addEventListener('change', async () => {
+    const settings = { style: document.getElementById('summaryStyle').value };
+    try {
+      await window.electronAPI.updateSummarySettings(settings);
+    } catch (error) {
+      console.error('Error saving summary settings:', error);
+    }
+  });
+}
+
 // Load data on page load
 setupTabs();
 loadUserData();
 loadStats();
 loadNotificationSettings();
 setupNotificationToggles();
+loadSummarySettings();
+setupSummaryStyle();
 
 // Auto-refresh stats every 30 seconds
 setInterval(() => {

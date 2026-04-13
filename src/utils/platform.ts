@@ -33,3 +33,14 @@ export function getModifierKey(): string {
 export function getDefaultShortcut(): string {
   return isMac() ? 'Cmd+Shift+/' : 'Ctrl+Shift+/';
 }
+
+/**
+ * Gets the default voice shortcut for the current platform
+ */
+export function getDefaultVoiceShortcut(): string {
+  return isMac() ? 'Cmd+Shift+V' : 'Ctrl+Shift+V';
+}
+
+export function getDefaultSummaryShortcut(): string {
+  return isMac() ? 'Cmd+Shift+S' : 'Ctrl+Shift+S';
+}

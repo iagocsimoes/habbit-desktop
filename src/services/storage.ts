@@ -13,11 +13,22 @@ const DEFAULT_NOTIFICATIONS: NotificationSettings = {
   style: 'minimal',
 };
 
+export type SummaryStylePref = 'bullets' | 'paragraph' | 'oneline' | 'detailed';
+
+export interface SummarySettings {
+  style: SummaryStylePref;
+}
+
+const DEFAULT_SUMMARY: SummarySettings = {
+  style: 'bullets',
+};
+
 interface StoreSchema {
   token?: string;
   tokenEncrypted?: boolean;
   userEmail?: string;
   notifications?: NotificationSettings;
+  summary?: SummarySettings;
 }
 
 class SecureStorage {
@@ -124,6 +135,21 @@ class SecureStorage {
   setNotificationSettings(settings: NotificationSettings): void {
     try {
       (this.getStore() as any).set('notifications', settings);
+    } catch {}
+  }
+
+  getSummarySettings(): SummarySettings {
+    try {
+      const stored = (this.getStore() as any).get('summary') as SummarySettings | undefined;
+      return stored ? { ...DEFAULT_SUMMARY, ...stored } : { ...DEFAULT_SUMMARY };
+    } catch {
+      return { ...DEFAULT_SUMMARY };
+    }
+  }
+
+  setSummarySettings(settings: SummarySettings): void {
+    try {
+      (this.getStore() as any).set('summary', settings);
     } catch {}
   }
 
