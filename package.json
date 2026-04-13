@@ -43,6 +43,7 @@
     "node-global-key-listener": "^0.3.0"
   },
   "build": {
+    "afterPack": "./scripts/afterPack.js",
     "appId": "com.habbit.desktop",
     "productName": "Habbit",
     "copyright": "Copyright © 2025 Habbit Team",
@@ -104,10 +105,9 @@
         }
       ],
       "category": "public.app-category.productivity",
-      "hardenedRuntime": true,
+      "identity": null,
+      "hardenedRuntime": false,
       "gatekeeperAssess": false,
-      "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist",
       "extendInfo": {
         "LSUIElement": true,
         "NSAppleEventsUsageDescription": "O Habbit precisa enviar eventos para copiar e colar texto automaticamente.",
